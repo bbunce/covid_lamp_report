@@ -119,18 +119,24 @@ def get_locations_weekly(df):
         df_loc_weekly[loc] = get_weekly_stats(df[loc], sdate, edate)
     return df_loc_weekly
 
+# get last mon and sun datetimes
+def get_mon_sun(last_mon):
+    last_mon = re.split('-|T', str(last_mon.values[0]))
+    mon = datetime(int(last_mon[0]),int(last_mon[1]),int(last_mon[2]),0,0,0)
+    sun = mon + timedelta(days=6) + timedelta(seconds=86399)
+    return mon, sun
+
 def generate_graphs(df_all, df_loc_weekly, locations):
-    # date ranges for number tests per user for last week
-    mon = datetime.today() - timedelta(days=7) - timedelta(seconds=(((datetime.today().hour)*60)*60)) - timedelta(seconds=((datetime.today().minute)*60)) - timedelta(seconds=(datetime.today().second - 1))
-    sun = datetime(datetime.today().year, datetime.today().month, datetime.today().day - 1, 0, 0, 0)
     
     for loc in locations:
         print(f"Generating {loc} graphs...")
         if loc == 'All Organisations':
             df = df_loc_weekly
+            mon, sun = get_mon_sun(df['index'].iloc[-2:-1])
             users = df_all[(df_all['DateRequested'] >= mon) & (df_all['DateRequested'] <= sun)]['UserID'].value_counts()
         else:
             df = df_loc_weekly[loc]
+            mon, sun = get_mon_sun(df['index'].iloc[-2:-1])
             users = df_all[((df_all['Location1Desc'] == loc) | (df_all['Location2Desc'] == loc)) & (df_all['DateRequested'] >= mon) & (df_all['DateRequested'] <= sun)]['UserID'].value_counts()
         
         # drop the most recent week (i.e. week in progress)
@@ -177,14 +183,14 @@ def generate_excel_report(report_name, df_all_weekly, df_loc_weekly, locations):
     with pd.ExcelWriter(f'reports/LAMP Inidividual Reports {date.today()}_temp.xlsx') as writer:
         df_all_weekly.rename(columns={'index':'Date', 'Positive Rate':'Positive Rate (%)', 'Void Rate':'Void Rate (%)'}, inplace=True)
         df_all_weekly.set_index('Date')
-        df_all_weekly['Date'] = df_all_weekly['Date'].dt.strftime('%m/%d/%Y')
+        df_all_weekly['Date'] = df_all_weekly['Date'].dt.strftime('%d/%m/%Y')
         df_all_weekly = df_all_weekly.round({'Positive Rate (%)': 2, 'Void Rate (%)': 2})
         df_all_weekly.to_excel(writer, sheet_name=f'{loc_codes["All Organisations"]}')
         for loc in locations:
             print(f"Compiling {loc} report...")
             df_loc_weekly[loc].rename(columns={'index':'Date', 'Positive Rate':'Positive Rate (%)', 'Void Rate':'Void Rate (%)'}, inplace=True)
             df_loc_weekly[loc].set_index('Date')
-            df_loc_weekly[loc]['Date'] = df_loc_weekly[loc]['Date'].dt.strftime('%m/%d/%Y')
+            df_loc_weekly[loc]['Date'] = df_loc_weekly[loc]['Date'].dt.strftime('%d/%m/%Y')
             df_loc_weekly[loc] = df_loc_weekly[loc].round({'Positive Rate (%)': 2, 'Void Rate (%)': 2})
             df_loc_weekly[loc].to_excel(writer, sheet_name=f'{loc_codes[loc]}')
 
