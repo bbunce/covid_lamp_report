@@ -227,7 +227,7 @@ def generate_excel_report(report_name, df_all_weekly, df_loc_weekly, locations):
         sheet.conditional_formatting.add('I2:I14', CellIsRule(operator='equal', formula=[0], stopIfTrue=True, fill=greenFill))
         sheet.conditional_formatting.add('I2:I14', CellIsRule(operator='between', formula=[0.01, 5], stopIfTrue=True, fill=amberFill))
         sheet.conditional_formatting.add('I2:I14', CellIsRule(operator='greaterThan', formula=[5], stopIfTrue=True, fill=redFill))
-    wb.save(f'reports/LAMP Inidividual Reports ({report_name}) {date.today()}.xlsx')
+    wb.save(f'reports/{date.today()} LAMP Report ({report_name}).xlsx')
 
     # delete temp_lamp_report file
     os.remove(temp_lamp_report)
