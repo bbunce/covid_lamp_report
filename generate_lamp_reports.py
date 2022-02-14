@@ -48,12 +48,16 @@ df_all = pd.read_csv(lamp_file)
 # remove duplicate location2 if it equals location1
 df_all[['DateRequested', 'DateResulted', 'DateSampleTaken', 'DateSampleReceived']] = df_all[['DateRequested', 'DateResulted', 'DateSampleTaken', 'DateSampleReceived']].apply(pd.to_datetime, errors='coerce')
 df_all['DateRequested'] = pd.to_datetime(df_all['DateRequested'], format='%Y-%m-%d')
-df_all[['TestRequestID', 'UserID', 'TestStateID', 'Barcode', 'ResultTypeID']] = df_all[['TestRequestID', 'UserID', 'TestStateID', 'Barcode', 'ResultTypeID']].apply(pd.to_numeric, errors='coerce')
+df_all[['TestRequestID', 'UserID', 'TestStateID', 'ResultTypeID']] = df_all[['TestRequestID', 'UserID', 'TestStateID', 'ResultTypeID']].apply(pd.to_numeric, errors='coerce')
 df_all['Location2Desc'] = df_all.apply(lambda x: "" if x['Location1Desc'] == x['Location2Desc'] else x['Location2Desc'], axis=1)
 
 # smaller df for development / report only looks at previous 3 month / time saver
 df_all['DateRequested'] = pd.to_datetime(df_all['DateRequested'], format='%Y-%m-%d')
-df_all = df_all.loc[df_all['DateRequested'] >= '2021-08-01']
+df_all = df_all.loc[df_all['DateRequested'] >= '2021-11-01']
+
+# remove samples from dataframe by barcode
+remove_samples = ['RNA30627731']
+df_all = df_all[~df_all['Barcode'].isin(remove_samples)]
 
 # get list of unique locations
 locations = list(df_all['Location1Desc'].unique()) + list(df_all['Location2Desc'].unique())
